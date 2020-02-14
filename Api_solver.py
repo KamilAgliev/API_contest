@@ -14,10 +14,11 @@ class Example(QWidget):
         self.longitude = "52.340178"
         self.latitude = "54.887520"
         self.z = "12"
+        self.l = 'map'
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
-            "l": "map",
+            "l": self.l,
             "apikey": "40d1649f-0493-4b70-98ba-98533de7710b"
         }
         geocoder_server = "http://static-maps.yandex.ru/1.x/"
@@ -27,6 +28,7 @@ class Example(QWidget):
         self.image_label = QLabel(self)
         self.image_label.resize(500, 500)
         self.image_label.setPixmap(QPixmap("map.png"))
+        self.change_l()
 
     def keyPressEvent(self, event):
         if event.key() == 16777238:
@@ -54,7 +56,7 @@ class Example(QWidget):
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
-            "l": "map",
+            "l": self.l,
             "apikey": "40d1649f-0493-4b70-98ba-98533de7710b"
         }
         geocoder_server = "http://static-maps.yandex.ru/1.x/"
@@ -63,6 +65,16 @@ class Example(QWidget):
         with open("map.png", "wb") as file:
             file.write(response.content)
         self.image_label.setPixmap(QPixmap("map.png"))
+
+    def change_l(self):
+        dic = {
+            'схема': "map",
+            'спутник': 'sat',
+            'гибрид': 'sat,skl',
+        }
+        st = input('Введите переключатель слоёв карты')
+        self.l = dic[st]
+        self.update_map()
 
 
 if __name__ == '__main__':
