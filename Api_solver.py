@@ -1,17 +1,20 @@
 from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel
 from PyQt5.QtGui import QPixmap
+from PyQt5 import uic
 import sys
 
 from PIL import Image
 import requests
 
-SCREEN_SIZE = [500, 500]
+SCREEN_SIZE = [1000, 500]
 
 
 class Example(QWidget):
     def __init__(self):
         super().__init__()
+        uic.loadUi("untitled.ui", self)
+        # initial data
         self.longitude = "52.340178"
         self.latitude = "54.887520"
         self.z = "12"
@@ -29,7 +32,12 @@ class Example(QWidget):
         self.image_label = QLabel(self)
         self.image_label.resize(500, 500)
         self.image_label.setPixmap(QPixmap("map.png"))
-        self.change_l()
+        # find button
+        self.find_button.clicked.connect(self.find_toponym)
+
+    def find_toponym(self):
+        request = f"http: // geocode - maps.yandex.ru / 1.x /?apikey = 40d1649f - 0493 - 4b70 - 98ba - 98533" \
+                  "de7710b & geocode = {self.}& format = json"
 
     def keyPressEvent(self, event):
         if event.key() == 16777238:
