@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QApplication, QWidget
 from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel
 from PyQt5.QtGui import QPixmap
 import sys
+
 from PIL import Image
 import requests
 
@@ -72,8 +73,12 @@ class Example(QWidget):
             'спутник': 'sat',
             'гибрид': 'sat,skl',
         }
-        st = input('Введите переключатель слоёв карты')
-        self.l = dic[st]
+        st = input('Введите переключатель слоёв карты ').strip()
+        try:
+            self.l = dic[st]
+        except Exception:
+            print("Не существует такого слоя карты")
+            return
         self.update_map()
 
 
