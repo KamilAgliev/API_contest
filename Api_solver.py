@@ -68,14 +68,14 @@ class Example(QWidget):
         self.image_label.setPixmap(QPixmap("map.png"))
 
     def change_l(self):
-        dic = {
+        choices = {
             'схема': "map",
             'спутник': 'sat',
             'гибрид': 'sat,skl',
         }
         st = input('Введите переключатель слоёв карты ').strip()
         try:
-            self.l = dic[st]
+            self.l = choices[st]
         except Exception:
             print("Не существует такого слоя карты")
             return
