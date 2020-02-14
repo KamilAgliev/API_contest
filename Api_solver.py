@@ -30,18 +30,33 @@ class Example(QWidget):
 
     def keyPressEvent(self, event):
         if event.key() == 16777238:
+            # Page_up
             self.z = str(min(19, int(self.z) + 1))
         if event.key() == 16777239:
+            # page_down
             self.z = str(max(2, int(self.z) - 1))
+        if event.key() == 16777234:
+            # left
+            self.longitude = str(float(self.longitude) - 1)
+        if event.key() == 16777235:
+            # up
+            self.latitude = str(float(self.latitude) + 1)
+        if event.key() == 16777236:
+            # right
+            self.longitude = str(float(self.longitude) + 1)
+        if event.key() == 16777237:
+            # down
+            self.latitude = str(float(self.latitude) - 1)
+
+        self.update_map()
+
+    def update_map(self):
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
             "l": "map",
             "apikey": "40d1649f-0493-4b70-98ba-98533de7710b"
         }
-        self.update_map()
-
-    def update_map(self):
         geocoder_server = "http://static-maps.yandex.ru/1.x/"
         response = requests.get(geocoder_server, params=self.params)
         print(response.url)
