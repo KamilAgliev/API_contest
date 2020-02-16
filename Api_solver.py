@@ -33,6 +33,16 @@ class Example(QMainWindow):
         # find button
         self.find_button.clicked.connect(self.find_toponym)
         self.error_label.hide()
+        self.marks = self.longitude + ',' + self.latitude + '~'
+        self.up.clicked.connect(self.Change_buttons)
+        self.down.clicked.connect(self.Change_buttons)
+        self.left.clicked.connect(self.Change_buttons)
+        self.right.clicked.connect(self.Change_buttons)
+        self.PgUp.clicked.connect(self.Change_buttons)
+        self.PgDn.clicked.connect(self.Change_buttons)
+        self.command_btn.clicked.connect(self.run_command_menu)
+        self.enter_btn.clicked.connect(self.run)
+        self.curr_mark = 2
 
     def find_toponym(self):
         request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode" \
@@ -48,25 +58,26 @@ class Example(QMainWindow):
             self.longitude, self.latitude = toponym_coodrinates.split()
             self.update_map()
 
-    def keyPressEvent(self, event):
-        if event.key() == 16777238:
+    def Change_buttons(self):
+        send = self.sender().text()
+        if send == 'PgUp':
             # Page_up
             self.z = str(min(19, int(self.z) + 1))
-        elif event.key() == 16777239:
+        elif send == 'PgDn':
             # page_down
             self.z = str(max(2, int(self.z) - 1))
-        elif event.key() == 16777234:
+        elif send == '<-':
             # left
-            self.longitude = str(float(self.longitude) - 1)
-        elif event.key() == 16777235:
+            self.longitude = str(float(self.longitude) - ((20.0 - int(self.z)) / 200))
+        elif send == '↑':
             # up
-            self.latitude = str(float(self.latitude) + 1)
-        elif event.key() == 16777236:
+            self.latitude = str(float(self.latitude) + ((20. - int(self.z)) / 200))
+        elif send == '->':
             # right
-            self.longitude = str(float(self.longitude) + 1)
-        elif event.key() == 16777237:
+            self.longitude = str(float(self.longitude) + ((20.0 - int(self.z)) / 200))
+        elif send == '↓':
             # down
-            self.latitude = str(float(self.latitude) - 1)
+            self.latitude = str(float(self.latitude) - ((20. - int(self.z)) / 200))
         else:
             return
         self.update_map()
@@ -76,7 +87,8 @@ class Example(QMainWindow):
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
             "l": self.l,
-            "apikey": "40d1649f-0493-4b70-98ba-98533de7710b"
+            "apikey": "40d1649f-0493-4b70-98ba-98533de7710b",
+            "pt": self.marks[:-1]
         }
         geocoder_server = "http://static-maps.yandex.ru/1.x/"
         response = requests.get(geocoder_server, params=self.params)
@@ -84,19 +96,60 @@ class Example(QMainWindow):
             file.write(response.content)
         self.image_label.setPixmap(QPixmap("map.png"))
 
-    def change_l(self):
+    def change_l(self, st):
         choices = {
             'схема': "map",
             'спутник': 'sat',
             'гибрид': 'sat,skl',
         }
-        st = input('Введите переключатель слоёв карты ').strip()
         try:
             self.l = choices[st]
         except Exception:
             print("Не существует такого слоя карты")
             return
         self.update_map()
+
+    def run_command_menu(self):
+        self.curr_com = self.command_line.text()
+        if self.curr_com == "1":
+            self.what_to_input.setText("Введите слой карты (схема/спутник/гибрид)")
+        elif self.curr_com == "2":
+            self.what_to_input.setText("Нажмите на кнопку \'enter\', меню ввода появится в консоли")
+
+    def run(self):
+        text = self.second_enter_line.text()
+        if self.curr_com == '1':
+            self.change_l(text)
+            self.what_to_input.setText("")
+        elif self.curr_com == "2":
+            self.create_mark()
+
+    def create_mark(self):
+        try:
+            print("Введите на отдельных строках: адрес места, цвет и размер")
+            adress = input("Адрес:")
+            color = input(
+                "Цвет: (подсказки ниже)\n"
+                "wt — белый(по умолчанию);do — темно-оранжевый;db — темно-синий;\n"
+                "bl — синий;gn — зеленый;gr — серый;lb — светло-синий;\n"
+                "nt — темная ночь;or — оранжевый;pn — розовый;rd — красный;\n"
+                "vv — фиолетовый;yw — желтый;\n")
+            size = input('s - маленький; m - средний, l - большой\n')
+            geocoder_request = f"http://geocode-maps.yandex.ru/1.x/?" \
+                f"apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={adress}&format=json"
+            response = requests.get(geocoder_request)
+            json = response.json()
+            toponym = json["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+            coords = toponym["Point"]["pos"].split()
+            metka = f'{",".join(coords)},pm'
+            metka += color
+            metka += size + str(self.curr_mark) + '~'
+            self.curr_mark += 1
+            self.marks += metka
+            self.update_map()
+        except Exception as e:
+            print('Что-то пошло не так,проверьте правильность ввода и повторите ввод сначала')
+            self.create_mark()
 
 
 if __name__ == '__main__':
