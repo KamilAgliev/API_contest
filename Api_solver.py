@@ -40,21 +40,28 @@ class Example(QMainWindow):
         self.right.clicked.connect(self.Change_buttons)
         self.PgUp.clicked.connect(self.Change_buttons)
         self.PgDn.clicked.connect(self.Change_buttons)
-        self.command_btn.clicked.connect(self.run_command_menu)
-        self.enter_btn.clicked.connect(self.run)
         self.curr_mark = 2
         self.prev_mark = 1
         self.ret_btn.clicked.connect(self.return_to_initial)
+        self.maps = {
+            'схема': "map",
+            'спутник': 'sat',
+            'гибрид': 'sat,skl',
+        }
 
     def find_toponym(self):
         request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode" \
-                  f"={self.request_line.text()}&format=json"
+            f"={self.request_line.text()}&format=json"
         response = requests.get(request)
         if not response:
             self.error_label.show()
         else:
             self.error_label.hide()
             json_response = response.json()
+            if len(json_response["response"]["GeoObjectCollection"][
+                       "featureMember"]) == 0:
+                self.error_label.show()
+                return
             toponym = \
                 json_response["response"]["GeoObjectCollection"][
                     "featureMember"][
@@ -71,6 +78,7 @@ class Example(QMainWindow):
 
     def Change_buttons(self):
         send = self.sender().text()
+        k = (19. - int(self.z)) * (19. - int(self.z)) / 3000
         if send == 'PgUp':
             # Page_up
             self.z = str(min(19, int(self.z) + 1))
@@ -80,24 +88,27 @@ class Example(QMainWindow):
         elif send == '<-':
             # left
             self.longitude = str(
-                float(self.longitude) - ((20.0 - int(self.z)) / 200))
+                float(self.longitude) - k)
         elif send == '↑':
             # up
             self.latitude = str(
-                float(self.latitude) + ((20. - int(self.z)) / 200))
+                float(self.latitude) + k)
         elif send == '->':
             # right
             self.longitude = str(
-                float(self.longitude) + ((20.0 - int(self.z)) / 200))
+                float(self.longitude) + k)
         elif send == '↓':
             # down
             self.latitude = str(
-                float(self.latitude) - ((20. - int(self.z)) / 200))
+                float(self.latitude) - k)
         else:
             return
         self.update_map()
 
     def update_map(self):
+        for btn in ex.buttonGroup.buttons():
+            if btn.isChecked():
+                self.l = self.maps[btn.text()]
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
@@ -107,39 +118,10 @@ class Example(QMainWindow):
         }
         geocoder_server = "http://static-maps.yandex.ru/1.x/"
         response = requests.get(geocoder_server, params=self.params)
+        print(response.url)
         with open("map.png", "wb") as file:
             file.write(response.content)
         self.image_label.setPixmap(QPixmap("map.png"))
-
-    def change_l(self, st):
-        choices = {
-            'схема': "map",
-            'спутник': 'sat',
-            'гибрид': 'sat,skl',
-        }
-        try:
-            self.l = choices[st]
-        except Exception:
-            print("Не существует такого слоя карты")
-            return
-        self.update_map()
-
-    def run_command_menu(self):
-        self.curr_com = self.command_line.text()
-        if self.curr_com == "1":
-            self.what_to_input.setText(
-                "Введите слой карты (схема/спутник/гибрид)")
-        elif self.curr_com == "2":
-            self.what_to_input.setText(
-                "Нажмите на кнопку \'enter\', меню ввода появится в консоли")
-
-    def run(self):
-        text = self.second_enter_line.text()
-        if self.curr_com == '1':
-            self.change_l(text)
-            self.what_to_input.setText("")
-        elif self.curr_com == "2":
-            self.create_mark()
 
     def return_to_initial(self):
         self.longitude = "52.340178"
@@ -153,13 +135,7 @@ class Example(QMainWindow):
             "apikey": "40d1649f-0493-4b70-98ba-98533de7710b",
             "pt": self.marks[:-1]
         }
-        geocoder_server = "http://static-maps.yandex.ru/1.x/"
-        response = requests.get(geocoder_server, params=self.params)
-        with open("map.png", "wb") as file:
-            file.write(response.content)
-        self.image_label = QLabel(self)
-        self.image_label.resize(500, 500)
-        self.image_label.setPixmap(QPixmap("map.png"))
+        self.update_map()
 
 
 if __name__ == '__main__':
