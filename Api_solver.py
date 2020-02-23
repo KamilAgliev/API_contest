@@ -40,6 +40,9 @@ class Example(QMainWindow):
         self.right.clicked.connect(self.Change_buttons)
         self.PgUp.clicked.connect(self.Change_buttons)
         self.PgDn.clicked.connect(self.Change_buttons)
+        self.radioButton.toggled.connect(self.l_change)
+        self.radioButton_2.toggled.connect(self.l_change)
+        self.radioButton_3.toggled.connect(self.l_change)
         self.curr_mark = 2
         self.prev_mark = 1
         self.ret_btn.clicked.connect(self.return_to_initial)
@@ -103,6 +106,12 @@ class Example(QMainWindow):
                 float(self.latitude) - k)
         else:
             return
+        self.update_map()
+
+    def l_change(self):
+        for btn in ex.buttonGroup.buttons():
+            if btn.isChecked():
+                self.l = self.maps[btn.text()]
         self.update_map()
 
     def update_map(self):
