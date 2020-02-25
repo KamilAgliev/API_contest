@@ -109,15 +109,12 @@ class Example(QMainWindow):
         self.update_map()
 
     def l_change(self):
-        for btn in ex.buttonGroup.buttons():
+        for btn in self.buttonGroup.buttons():
             if btn.isChecked():
                 self.l = self.maps[btn.text()]
         self.update_map()
 
     def update_map(self):
-        for btn in ex.buttonGroup.buttons():
-            if btn.isChecked():
-                self.l = self.maps[btn.text()]
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
