@@ -3,8 +3,6 @@ from PyQt5.QtWidgets import QPushButton, QLineEdit, QLabel
 from PyQt5.QtGui import QPixmap
 from PyQt5 import uic
 import sys
-
-from PIL import Image
 import requests
 
 
@@ -16,7 +14,7 @@ class Example(QMainWindow):
         self.longitude = "52.340178"
         self.latitude = "54.887520"
         self.z = "12"
-        self.l = 'map'
+        self.l = ['map', 'png']
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
@@ -27,8 +25,6 @@ class Example(QMainWindow):
         response = requests.get(geocoder_server, params=self.params)
         with open("map.png", "wb") as file:
             file.write(response.content)
-        self.image_label = QLabel(self)
-        self.image_label.resize(500, 500)
         self.image_label.setPixmap(QPixmap("map.png"))
         # find button
         self.find_button.clicked.connect(self.find_toponym)
@@ -47,14 +43,14 @@ class Example(QMainWindow):
         self.prev_mark = 1
         self.ret_btn.clicked.connect(self.return_to_initial)
         self.maps = {
-            'схема': "map",
-            'спутник': 'sat',
-            'гибрид': 'sat,skl',
+            'схема': ["map", 'png'],
+            'спутник': ['sat', 'jpeg'],
+            'гибрид': ['sat,skl', 'jpeg']
         }
 
     def find_toponym(self):
         request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode" \
-            f"={self.request_line.text()}&format=json"
+                  f"={self.request_line.text()}&format=json"
         response = requests.get(request)
         if not response:
             self.error_label.show()
@@ -78,6 +74,8 @@ class Example(QMainWindow):
             self.curr_mark += 1
             self.marks += metka
             self.update_map()
+            self.show_adress(
+                toponym["metaDataProperty"]["GeocoderMetaData"]["text"])
 
     def Change_buttons(self):
         send = self.sender().text()
@@ -109,31 +107,28 @@ class Example(QMainWindow):
         self.update_map()
 
     def l_change(self):
-        for btn in self.buttonGroup.buttons():
-            if btn.isChecked():
-                self.l = self.maps[btn.text()]
+        self.l = self.maps[self.sender().text()]
         self.update_map()
 
     def update_map(self):
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
-            "l": self.l,
+            "l": self.l[0],
             "apikey": "40d1649f-0493-4b70-98ba-98533de7710b",
             "pt": self.marks[:-1]
         }
         geocoder_server = "http://static-maps.yandex.ru/1.x/"
         response = requests.get(geocoder_server, params=self.params)
         print(response.url)
-        with open("map.png", "wb") as file:
+        with open(f"map.{self.l[1]}", "wb") as file:
             file.write(response.content)
-        self.image_label.setPixmap(QPixmap("map.png"))
+        self.image_label.setPixmap(QPixmap(f"map.{self.l[1]}"))
 
     def return_to_initial(self):
         self.longitude = "52.340178"
         self.latitude = "54.887520"
         self.z = "12"
-        self.l = 'map'
         self.params = {
             "z": self.z,
             "ll": self.longitude + ',' + self.latitude,
@@ -142,6 +137,10 @@ class Example(QMainWindow):
             "pt": self.marks[:-1]
         }
         self.update_map()
+        self.adress_label.setText("Адрес: Россия, Альметьевск ")
+
+    def show_adress(self, toponym):
+        self.adress_label.setText(f"Адрес: {toponym}")
 
 
 if __name__ == '__main__':
