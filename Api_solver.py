@@ -63,11 +63,11 @@ class Example(QMainWindow):
                        "featureMember"]) == 0:
                 self.error_label.show()
                 return
-            toponym = \
+            self.toponym = \
                 json_response["response"]["GeoObjectCollection"][
                     "featureMember"][
                     0]["GeoObject"]
-            toponym_coodrinates = toponym["Point"]["pos"]
+            toponym_coodrinates = self.toponym["Point"]["pos"]
             self.longitude, self.latitude = toponym_coodrinates.split()
             metka = f'{",".join(toponym_coodrinates.split())},pm'
             metka += 'wt'
@@ -76,8 +76,7 @@ class Example(QMainWindow):
             self.curr_mark += 1
             self.marks += metka
             self.update_map()
-            self.show_adress(
-                toponym)
+            self.show_adress()
  
     def Change_buttons(self):
         send = self.sender().text()
@@ -141,18 +140,19 @@ class Example(QMainWindow):
         self.update_map()
         self.adress_label.setText("Адрес: Россия, Альметьевск")
  
-    def show_adress(self, toponym):
+    def show_adress(self):
         if self.postal:
             try:
-                postal_code = toponym['metaDataProperty']['GeocoderMetaData']['Address']['postal_code']
+                postal_code = self.toponym['metaDataProperty']['GeocoderMetaData']['Address']['postal_code']
             except Exception:
                 postal_code = ""
         else:
             postal_code = ""
-        self.adress_label.setText(f"Адрес: {toponym['metaDataProperty']['GeocoderMetaData']['text']}, {postal_code}")
+        self.adress_label.setText(f"Адрес: {self.toponym['metaDataProperty']['GeocoderMetaData']['text']}, {postal_code}")
  
     def change_postal(self):
         self.postal = not self.postal
+        self.show_adress()
  
  
 if __name__ == '__main__':
