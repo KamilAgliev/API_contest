@@ -4,8 +4,8 @@ from PyQt5.QtGui import QPixmap
 from PyQt5 import uic
 import sys
 import requests
- 
- 
+
+
 class Example(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -49,7 +49,15 @@ class Example(QMainWindow):
             'спутник': ['sat', 'jpeg'],
             'гибрид': ['sat,skl', 'jpeg']
         }
- 
+        request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode" \
+                  f"={'Альметьевск'}&format=json"
+        response = requests.get(request)
+        json_response = response.json()
+        self.toponym = \
+            json_response["response"]["GeoObjectCollection"][
+                "featureMember"][
+                0]["GeoObject"]
+
     def find_toponym(self):
         request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode" \
                   f"={self.request_line.text()}&format=json"
@@ -77,7 +85,7 @@ class Example(QMainWindow):
             self.marks += metka
             self.update_map()
             self.show_adress()
- 
+
     def Change_buttons(self):
         send = self.sender().text()
         k = (19. - int(self.z)) * (19. - int(self.z)) / 3000
@@ -106,11 +114,11 @@ class Example(QMainWindow):
         else:
             return
         self.update_map()
- 
+
     def l_change(self):
         self.l = self.maps[self.sender().text()]
         self.update_map()
- 
+
     def update_map(self):
         self.params = {
             "z": self.z,
@@ -125,7 +133,7 @@ class Example(QMainWindow):
         with open(f"map.{self.l[1]}", "wb") as file:
             file.write(response.content)
         self.image_label.setPixmap(QPixmap(f"map.{self.l[1]}"))
- 
+
     def return_to_initial(self):
         self.longitude = "52.340178"
         self.latitude = "54.887520"
@@ -139,22 +147,26 @@ class Example(QMainWindow):
         }
         self.update_map()
         self.adress_label.setText("Адрес: Россия, Альметьевск")
- 
+
     def show_adress(self):
         if self.postal:
             try:
-                postal_code = self.toponym['metaDataProperty']['GeocoderMetaData']['Address']['postal_code']
+                postal_code = \
+                    self.toponym['metaDataProperty']['GeocoderMetaData'][
+                        'Address'][
+                        'postal_code']
             except Exception:
                 postal_code = ""
         else:
             postal_code = ""
-        self.adress_label.setText(f"Адрес: {self.toponym['metaDataProperty']['GeocoderMetaData']['text']}, {postal_code}")
- 
+        self.adress_label.setText(
+            f"Адрес: {self.toponym['metaDataProperty']['GeocoderMetaData']['text']}, {postal_code}")
+
     def change_postal(self):
         self.postal = not self.postal
         self.show_adress()
- 
- 
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Example()
