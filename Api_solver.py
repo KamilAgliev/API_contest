@@ -4,8 +4,8 @@ from PyQt5.QtGui import QPixmap
 from PyQt5 import uic
 import sys
 import requests
-
-
+ 
+ 
 class Example(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -53,11 +53,14 @@ class Example(QMainWindow):
                   f"={'Альметьевск'}&format=json"
         response = requests.get(request)
         json_response = response.json()
+ 
         self.toponym = \
             json_response["response"]["GeoObjectCollection"][
                 "featureMember"][
                 0]["GeoObject"]
-
+        self.lower_corner = self.toponym['boundedBy']['Envelope']['lowerCorner'].split()
+        self.upper_corner = self.toponym['boundedBy']['Envelope']['upperCorner'].split()
+ 
     def find_toponym(self):
         request = f"http://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode" \
                   f"={self.request_line.text()}&format=json"
@@ -75,6 +78,8 @@ class Example(QMainWindow):
                 json_response["response"]["GeoObjectCollection"][
                     "featureMember"][
                     0]["GeoObject"]
+            self.lower_corner = self.toponym['boundedBy']['Envelope']['lowerCorner'].split()
+            self.upper_corner = self.toponym['boundedBy']['Envelope']['upperCorner'].split()
             toponym_coodrinates = self.toponym["Point"]["pos"]
             self.longitude, self.latitude = toponym_coodrinates.split()
             metka = f'{",".join(toponym_coodrinates.split())},pm'
@@ -85,7 +90,7 @@ class Example(QMainWindow):
             self.marks += metka
             self.update_map()
             self.show_adress()
-
+ 
     def Change_buttons(self):
         send = self.sender().text()
         k = (19. - int(self.z)) * (19. - int(self.z)) / 3000
@@ -114,11 +119,11 @@ class Example(QMainWindow):
         else:
             return
         self.update_map()
-
+ 
     def l_change(self):
         self.l = self.maps[self.sender().text()]
         self.update_map()
-
+ 
     def update_map(self):
         self.params = {
             "z": self.z,
@@ -133,7 +138,7 @@ class Example(QMainWindow):
         with open(f"map.{self.l[1]}", "wb") as file:
             file.write(response.content)
         self.image_label.setPixmap(QPixmap(f"map.{self.l[1]}"))
-
+ 
     def return_to_initial(self):
         self.longitude = "52.340178"
         self.latitude = "54.887520"
@@ -147,7 +152,7 @@ class Example(QMainWindow):
         }
         self.update_map()
         self.adress_label.setText("Адрес: Россия, Альметьевск")
-
+ 
     def show_adress(self):
         if self.postal:
             try:
@@ -161,12 +166,27 @@ class Example(QMainWindow):
             postal_code = ""
         self.adress_label.setText(
             f"Адрес: {self.toponym['metaDataProperty']['GeocoderMetaData']['text']}, {postal_code}")
-
+ 
     def change_postal(self):
         self.postal = not self.postal
         self.show_adress()
-
-
+ 
+    def mousePressEvent(self, event):
+        self.point = event.pos()
+        if 0 < self.point.x() < 600 and 10 < self.point.y() < 460:
+            print(self.lower_corner)
+            print(self.upper_corner)
+            x_koof = (float(self.upper_corner[0]) - float(self.lower_corner[0])) / 600
+            y_koof = (float(self.upper_corner[1]) - float(self.lower_corner[1])) / 450
+            print(y_koof, x_koof)
+            x_coord = self.point.x() * x_koof + float(self.lower_corner[0])
+            y_coord = (self.point.y() - 10) * y_koof + float(self.lower_corner[1])
+            print(x_coord, y_coord)
+            self.longitude = str(x_coord)
+            self.latitude = str(y_coord)
+            self.update_map()
+ 
+ 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = Example()
